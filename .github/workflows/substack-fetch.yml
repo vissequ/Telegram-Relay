@@ -16,9 +16,11 @@ jobs:
           python-version: "3.x"
 
       - name: Install dependencies
-        run: pip install feedparser python-dotenv
+        run: pip install requests feedparser python-dotenv
 
       - name: Run Substack Fetch Script
         env:
           SUBSTACK_RSS: ${{ secrets.SUBSTACK_RSS }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: python test.py
