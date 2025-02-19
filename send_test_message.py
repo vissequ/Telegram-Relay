@@ -21,4 +21,4 @@ def send_telegram_message(message):
         print(f"❌ Failed to send message: {response.text}")
 
 if __name__ == "__main__":
-    send_telegram_message("test")
+    send_telegram_message("test, this is from the github repo.")
