@@ -1,0 +1,24 @@
+name: Substack Fetch
+
+on:
+  workflow_dispatch:  # Allows manual execution only
+
+jobs:
+  fetch-substack:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.x"
+
+      - name: Install dependencies
+        run: pip install feedparser python-dotenv
+
+      - name: Run Substack Fetch Script
+        env:
+          SUBSTACK_RSS: ${{ secrets.SUBSTACK_RSS }}
+        run: python test.py
