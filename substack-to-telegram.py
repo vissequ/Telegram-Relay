@@ -1,6 +1,8 @@
+import os
 import requests
 from bs4 import BeautifulSoup
-import os
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 
 def send_telegram_message(bot_token, chat_id, message):
     """Send a message to a Telegram channel."""
@@ -18,10 +20,7 @@ def send_telegram_message(bot_token, chat_id, message):
         print(f"Failed to send Telegram message: {e}")
 
 def get_substack_articles():
-    # Hardcoded Substack RSS feed URL
     rss_url = "https://arditimagazine.substack.com/feed"
-    
-    # Get Telegram credentials from environment variables
     bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
     chat_id = os.getenv("TELEGRAM_CHAT_ID")
     
@@ -29,20 +28,26 @@ def get_substack_articles():
         print("Error: TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID not set.")
         return
     
-    # Set a browser-like User-Agent to avoid 403 errors
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-    }
+    # Set up headless Chrome
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+    chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/91.0.4472.124")
     
     try:
-        # Fetch the RSS feed with custom headers
-        response = requests.get(rss_url, headers=headers)
-        response.raise_for_status()  # Check if request was successful
+        driver = webdriver.Chrome(options=chrome_options)
+        driver.get(rss_url)
         
-        # Parse the XML content
-        soup = BeautifulSoup(response.content, 'xml')
+        # Wait for page to load (adjust time if needed)
+        driver.implicitly_wait(10)
         
-        # Find all items (articles) in the feed
+        # Get the page source after Cloudflare check
+        page_source = driver.page_source
+        driver.quit()
+        
+        # Parse with BeautifulSoup
+        soup = BeautifulSoup(page_source, 'xml')
         articles = soup.find_all('item')
         
         if not articles:
@@ -51,28 +56,25 @@ def get_substack_articles():
             
         print(f"Found {len(articles)} articles. Sending to Telegram...")
         
-        # Send each article to Telegram
         for i, article in enumerate(articles, 1):
             title = article.find('title').text
             link = article.find('link').text
             message = f"*{title}*\n{link}"
             send_telegram_message(bot_token, chat_id, message)
             
-    except requests.exceptions.RequestException as e:
-        print(f"Error fetching the feed: {e}")
-        # Print response text for debugging if available
-        if 'response' in locals():
-            print(f"Response content: {response.text[:500]}")  # First 500 chars
     except Exception as e:
         print(f"An error occurred: {e}")
+        if 'page_source' in locals():
+            print(f"Page source sample: {page_source[:500]}")
 
 if __name__ == "__main__":
     try:
         import requests
         from bs4 import BeautifulSoup
+        from selenium import webdriver
     except ImportError:
         print("Please install required libraries:")
-        print("pip install requests beautifulsoup4 lxml")
+        print("pip install requests beautifulsoup4 lxml selenium")
         exit()
 
     get_substack_articles()
