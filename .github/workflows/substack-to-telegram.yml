@@ -24,10 +24,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y google-chrome-stable
-          # Try dynamic version first
-          CHROME_VERSION=$(google-chrome --version | grep -oE "[0-9]+" | head -1)
-          DRIVER_VERSION=$(curl -sS https://chromedriver.storage.googleapis.com/LATEST_RELEASE_${CHROME_VERSION} || echo "132.0.6840.76")
-          wget -N https://chromedriver.storage.googleapis.com/${DRIVER_VERSION}/chromedriver_linux64.zip
+          # Hardcode ChromeDriver 132.0.6840.76 (compatible with Chrome 133.x for now)
+          wget -N https://chromedriver.storage.googleapis.com/132.0.6840.76/chromedriver_linux64.zip
           unzip chromedriver_linux64.zip
           sudo mv chromedriver /usr/local/bin/
           sudo chmod +x /usr/local/bin/chromedriver
