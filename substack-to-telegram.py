@@ -8,7 +8,7 @@ def send_telegram_message(bot_token, chat_id, message):
     payload = {
         "chat_id": chat_id,
         "text": message,
-        "parse_mode": "Markdown"  # Allows clickable links
+        "parse_mode": "Markdown"
     }
     try:
         response = requests.post(url, json=payload)
@@ -29,9 +29,14 @@ def get_substack_articles():
         print("Error: TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID not set.")
         return
     
+    # Set a browser-like User-Agent to avoid 403 errors
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+    }
+    
     try:
-        # Fetch the RSS feed
-        response = requests.get(rss_url)
+        # Fetch the RSS feed with custom headers
+        response = requests.get(rss_url, headers=headers)
         response.raise_for_status()  # Check if request was successful
         
         # Parse the XML content
@@ -50,17 +55,18 @@ def get_substack_articles():
         for i, article in enumerate(articles, 1):
             title = article.find('title').text
             link = article.find('link').text
-            # Format message with headline and clickable link
             message = f"*{title}*\n{link}"
             send_telegram_message(bot_token, chat_id, message)
             
     except requests.exceptions.RequestException as e:
         print(f"Error fetching the feed: {e}")
+        # Print response text for debugging if available
+        if 'response' in locals():
+            print(f"Response content: {response.text[:500]}")  # First 500 chars
     except Exception as e:
         print(f"An error occurred: {e}")
 
 if __name__ == "__main__":
-    # Check if required libraries are installed
     try:
         import requests
         from bs4 import BeautifulSoup
